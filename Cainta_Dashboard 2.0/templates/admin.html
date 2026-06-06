@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MDRRMO Workspace Console</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body { background-color: #0f111a; color: #e1e1e6; }
+        .card-custom { background-color: #1a1d29 !important; border: 1px solid #2a2e3d; border-radius: 12px; }
+        .chat-box { height: 220px; overflow-y: auto; background-color: #0b0c13; border-radius: 8px; padding: 10px; font-family: monospace; }
+    </style>
+</head>
+<body class="py-4">
+
+    <div class="container" style="max-width: 850px;">
+        
+        <div class="card card-custom p-4 mb-4 shadow-lg">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0 text-warning fw-bold"><i class="bi bi-shield-lock-fill me-2"></i>MDRRMO Control Console</h3>
+                    <p class="text-white-50 small mb-0">Active Operator: <strong>{{ user_name }}</strong> | Clearance Tier: <span class="badge bg-primary">{{ user_role }}</span></p>
+                </div>
+                <a href="/admin/logout" class="btn btn-sm btn-danger fw-bold px-3"><i class="bi bi-power me-1"></i> Terminate Session</a>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="card card-custom p-4 h-100 shadow-sm">
+                    <h5 class="fw-bold mb-1 text-white"><i class="bi bi-sliders me-2 text-primary"></i>System Calibration</h5>
+
+<p class="text-light small mb-3">Hardware Telemetry Override Desk</p>
+                    
+                    {% if user_role == 'Admin' %}
+                    <form id="adminForm" class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label small text-white fw-bold">Data Feed Processing Mode</label>
+                            <select id="simMode" class="form-select bg-dark text-white border-0">
+                                <option value="true">Simulation Loop (Random Telemetry)</option>
+                                <option value="false">Manual Override (Force Static Inputs)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small text-white fw-bold">Earthquake (g)</label>
+                            <input type="number" id="inputEQ" class="form-control bg-dark text-white border-0" step="0.1" value="0.2">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small text-white fw-bold">Smoke (PPM)</label>
+                            <input type="number" id="inputFire" class="form-control bg-dark text-white border-0" value="180">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small text-white fw-bold">Flood (cm)</label>
+                            <input type="number" id="inputFlood" class="form-control bg-dark text-white border-0" value="15">
+                        </div>
+                        <div class="col-12 mt-4">
+                            <button type="submit" class="btn btn-primary w-100 fw-bold"><i class="bi bi-broadcast me-1"></i> Deploy Calibration</button>
+                        </div>
+                    </form>
+                    {% else %}
+                    <div class="alert alert-dark text-center my-auto p-4 border-0" style="background-color: #12141c;">
+                        <i class="bi bi-lock-fill text-danger display-6 mb-2 d-block"></i>
+                        <span class="small fw-bold text-muted d-block">ACCESS DENIED</span>
+                        <p class="small text-muted-50 mb-0 mt-1">Calibration overrides are locked for Staff tier profiles.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card card-custom p-4 h-100 shadow-sm">
+                    <h5 class="fw-bold mb-1 text-white"><i class="bi bi-megaphone me-2 text-warning"></i>Public Bulletins</h5>
+                    <p class="text-light small mb-3">Post alert notices to public viewports</p>
+                    
+                    {% if user_role == 'Admin' %}
+                    <div class="mb-3">
+                        <textarea id="announcementText" class="form-control bg-dark text-white border-0 small" rows="2" placeholder="Type community flash broadcast warning here..."></textarea>
+                    </div>
+                    <button onclick="submitAnnouncement()" class="btn btn-warning w-100 btn-sm fw-bold mb-3"><i class="bi bi-send-fill me-1"></i> Publish Live Bulletin</button>
+                    {% else %}
+                    <div class="alert alert-danger border-0 fw-bold small mb-3 text-center py-3 text-white bg-danger bg-opacity-25">
+                        🔒 Bulletin submissions restricted to Administration Chief tier.
+                    </div>
+                    {% endif %}
+
+                    <div class="p-2 bg-dark rounded overflow-auto font-monospace small" id="admin-announcement-list" style="max-height: 120px;">
+                        </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card card-custom p-4 shadow-sm">
+                    <h5 class="fw-bold text-white mb-1"><i class="bi bi-chat-dots-fill me-2 text-success"></i>Internal Operator Communications Chatbox</h5>
+                    <p class="text-light small mb-3">Secure coordinate log bridge between field agents and base handlers</p>
+                    
+                    <div class="chat-box mb-3" id="chatWindow">
+                        </div>
+                    
+                    <div class="input-group">
+                        <input type="text" id="chatMessageField" class="form-control bg-dark text-white border-0" placeholder="Type internal communication text dispatch here...">
+                        <button onclick="submitChatMessage()" class="btn btn-success fw-bold px-4"><i class="bi bi-cursor-fill"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Check chat input field on Enter key press
+        document.getElementById('chatMessageField').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') submitChatMessage();
+        });
+
+        async function submitAnnouncement() {
+            const el = document.getElementById('announcementText');
+            if(!el || !el.value.trim()) return;
+            await fetch('/api/admin/announce', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: el.value })
+            });
+            el.value = '';
+        }
+
+        async function submitChatMessage() {
+            const el = document.getElementById('chatMessageField');
+            if(!el.value.trim()) return;
+            await fetch('/api/chat/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: el.value })
+            });
+            el.value = '';
+        }
+
+        async function updateConsoleFeed() {
+            try {
+                const response = await fetch('/api/sensors');
+                const serverData = await response.json();
+
+                // 1. Process Announcements List
+                const aList = document.getElementById('admin-announcement-list');
+                aList.innerHTML = '';
+                serverData.announcements.forEach(a => {
+                    aList.innerHTML += `<div class="mb-1 text-warning font-monospace">[${a.timestamp}] <span class="text-white">${a.author}:</span> ${a.text}</div>`;
+                });
+
+                // 2. Process Shared Operator Chat Logs
+                const chatWindow = document.getElementById('chatWindow');
+                const currentScroll = chatWindow.scrollTop + chatWindow.clientHeight >= chatWindow.scrollHeight - 20;
+                
+                chatWindow.innerHTML = '';
+                serverData.chat.forEach(c => {
+                    chatWindow.innerHTML += `<div class="mb-1 text-white-50">[${c.timestamp}] <span class="text-success fw-bold">${c.user}:</span> <span class="text-white">${c.text}</span></div>`;
+                });
+
+                if(currentScroll) chatWindow.scrollTop = chatWindow.scrollHeight;
+
+            } catch (err) { console.error("Pipeline Sync Error:", err); }
+        }
+
+        // Handle Admin Form submission if available
+        const aForm = document.getElementById('adminForm');
+        if(aForm) {
+            aForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const payload = {
+                    simulation_mode: document.getElementById('simMode').value === "true",
+                    earthquake_vibration: document.getElementById('inputEQ').value,
+                    fire_smoke_level: document.getElementById('inputFire').value,
+                    flood_water_level_cm: document.getElementById('inputFlood').value
+                };
+                await fetch('/api/admin/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                alert("Calibration Overrides Saved!");
+            });
+        }
+
+        setInterval(updateConsoleFeed, 1000);
+    </script>
+</body>
+</html>

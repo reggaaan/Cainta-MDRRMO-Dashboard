@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cainta Multi-Hazard Command Center</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { background-color: #f8f9fa; color: #212529; }
+        .bg-municipal-blue { background-color: #0d6efd; }
+        .text-municipal-blue { color: #0d6efd; }
+        .hazard-card { border: none; border-top: 5px solid #0d6efd; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .hazard-value { font-size: 2.5rem; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-dark bg-municipal-blue shadow-sm mb-2">
+        <div class="container-fluid px-4">
+            <span class="navbar-brand mb-0 h1"><i class="bi bi-shield-exclamation me-2"></i>Cainta Multi-Hazard Alert System</span>
+            <span class="badge bg-light text-success fs-6 p-2" id="system-status">● System Operational</span>
+        </div>
+    </nav>
+
+    <div class="container-fluid px-4 mb-3">
+        <div class="alert alert-warning py-2 mb-0 d-flex align-items-center rounded shadow-sm border-0" role="alert">
+            <span class="badge bg-danger me-3"><i class="bi bi-megaphone-fill me-1"></i> BULLETIN:</span>
+            <marquee class="fw-bold text-dark small" id="public-announcement-marquee">Loading latest active municipal bulletins...</marquee>
+        </div>
+    </div>
+
+    <div class="container-fluid px-4">
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="p-3 bg-white rounded shadow-sm d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-1 text-municipal-blue"><i class="bi bi-geo-alt-fill me-1"></i> Command Hub: Node 1 (Near ICCT Cainta)</h5>
+                        <p class="text-muted small mb-0">Real-time telemetry along Felix Avenue, Cainta, Rizal</p>
+                    </div>
+                    <div class="text-end">
+                        <p class="mb-0 fw-bold text-secondary" id="live-clock">Loading time...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="card hazard-card h-100 p-4 bg-white" id="eq-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="card-title text-muted mb-0">EARTHQUAKE</h5>
+                        <i class="bi bi-activity text-municipal-blue fs-3" id="eq-icon"></i>
+                    </div>
+                    <div class="hazard-value" id="eq-val">0.00 g</div>
+                    <p class="text-muted small mb-1">Peak Ground Acceleration (g)</p>
+                    <div class="progress" style="height: 10px;">
+                        <div id="eq-progress" class="progress-bar bg-municipal-blue" role="progressbar" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card hazard-card h-100 p-4 bg-white" id="fire-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="card-title text-muted mb-0">FIRE / SMOKE</h5>
+                        <i class="bi bi-fire text-municipal-blue fs-3" id="fire-icon"></i>
+                    </div>
+                    <div class="hazard-value" id="fire-val">0 PPM</div>
+                    <p class="text-muted small mb-1">Air Particle Density (PPM)</p>
+                    <div class="progress" style="height: 10px;">
+                        <div id="fire-progress" class="progress-bar bg-municipal-blue" role="progressbar" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card hazard-card h-100 p-4 bg-white" id="flood-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="card-title text-muted mb-0">FLOOD LEVEL</h5>
+                        <i class="bi bi-water text-municipal-blue fs-3" id="flood-icon"></i>
+                    </div>
+                    <div class="hazard-value" id="flood-val">0 cm</div>
+                    <p class="text-muted small mb-1">Water Accumulation</p>
+                    <div class="progress" style="height: 10px;">
+                        <div id="flood-progress" class="progress-bar bg-municipal-blue" role="progressbar" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <div class="card p-4 bg-white shadow-sm border-0 h-100">
+                    <h5 class="text-municipal-blue mb-3"><i class="bi bi-graph-up me-2"></i>Live Incident Telemetry Timeline</h5>
+                    <div style="position: relative; height:300px; width:100%">
+                        <canvas id="telemetryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card p-4 bg-white shadow-sm border-0 h-100">
+                    <h5 class="text-municipal-blue mb-3"><i class="bi bi-map-fill me-2"></i>Deployment Zone Map</h5>
+                    <div class="ratio ratio-4x3 bg-light rounded" style="max-height: 300px;">
+                        <iframe src="https://maps.google.com/maps?q=ICCT%20Colleges%20Cainta&t=&z=16&ie=UTF8&iwloc=&output=embed" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-5">
+            <div class="col-md-5">
+                <div class="card p-4 bg-white h-100 shadow-sm border-0" style="border-top: 5px solid #0d6efd !important;">
+                    <h5 class="text-municipal-blue mb-3"><i class="bi bi-people-fill me-2"></i>Emergency Broadcast Directory</h5>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle">
+                            <thead class="table-light"><tr class="small text-muted"><th>Recipient / Office</th><th>Mobile Number</th><th>Status</th></tr></thead>
+                            <tbody class="small">
+                                <tr><td><strong>MDRRMO Cainta</strong></td><td>0917-XXX-XXXX</td><td><span class="badge bg-success">Active</span></td></tr>
+                                <tr><td>Barangay Captain (ICCT Zone)</td><td>0920-XXX-XXXX</td><td><span class="badge bg-success">Active</span></td></tr>
+                                <tr><td>Cainta Fire Station</td><td>0908-XXX-XXXX</td><td><span class="badge bg-success">Active</span></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-7">
+                <div class="card p-4 bg-white h-100 shadow-sm border-0" style="border-top: 5px solid #0d6efd !important;">
+                    <h5 class="text-municipal-blue mb-3"><i class="bi bi-chat-left-text-fill me-2"></i>Automated SMS Dispatch Log</h5>
+                    <div class="p-2 border rounded bg-light font-monospace small" style="height: 160px; overflow-y: auto;" id="sms-log-box">
+                        <div class="text-muted">[05:30:12 PM] SMS Engine Initialized... Standing by.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let smsSent = false;
+
+        function logSMSDispatch(hazardType, value) {
+            const logBox = document.getElementById('sms-log-box');
+            if(!logBox) return;
+            const timestamp = new Date().toLocaleTimeString();
+            let message = `<div class="text-danger fw-bold mt-1">[${timestamp}] 📱 SMS SENT TO DIRECTORY: "ALERT: Critical ${hazardType} detected near ICCT Cainta. Current value: ${value}. Take immediate precautions!"</div>`;
+            logBox.innerHTML += message;
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        let audioCtx = null;
+        function playWarningBeep() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+        }
+
+        setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleTimeString(); }, 1000);
+
+        const ctx = document.getElementById('telemetryChart').getContext('2d');
+        const telemetryChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    { label: 'Earthquake (g x10)', data: [], borderColor: '#0d6efd', tension: 0.3, fill: false },
+                    { label: 'Smoke Level (PPM / 3)', data: [], borderColor: '#ffc107', tension: 0.3, fill: false },
+                    { label: 'Flood Level (cm)', data: [], borderColor: '#17a2b8', tension: 0.3, fill: false }
+                ]
+            },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 120 } } }
+        });
+
+        function evaluateThreshold(value, warningLevel, dangerLevel, cardId, progressId, iconId, baseIcon, triggerIcon) {
+            const card = document.getElementById(cardId);
+            const progress = document.getElementById(progressId);
+            const icon = document.getElementById(iconId);
+
+            if (value >= dangerLevel) {
+                card.style.borderTopColor = "#dc3545"; progress.className = "progress-bar bg-danger";
+                icon.className = `bi ${triggerIcon} text-danger fs-3`; return "DANGER";
+            } else if (value >= warningLevel) {
+                card.style.borderTopColor = "#ffc107"; progress.className = "progress-bar bg-warning";
+                icon.className = `bi ${baseIcon} text-warning fs-3`; return "WARNING";
+            } else {
+                card.style.borderTopColor = "#0d6efd"; progress.className = "progress-bar bg-municipal-blue";
+                icon.className = `bi ${baseIcon} text-municipal-blue fs-3`; return "NORMAL";
+            }
+        }
+
+        async function updateTelemetryFeed() {
+            try {
+                const response = await fetch('/api/sensors');
+                const serverData = await response.json();
+                
+                const telemetry = serverData.telemetry;
+                const timeNow = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+                // Render latest active announcement to Marquee banner
+                if(serverData.announcements.length > 0) {
+                    const latestAnnounce = serverData.announcements[0];
+                    document.getElementById('public-announcement-marquee').innerText = `[${latestAnnounce.timestamp}] Posted by ${latestAnnounce.author}: "${latestAnnounce.text}"`;
+                }
+
+                document.getElementById('eq-val').innerText = telemetry.earthquake_vibration.toFixed(2) + " g";
+                document.getElementById('fire-val').innerText = telemetry.fire_smoke_level + " PPM";
+                document.getElementById('flood-val').innerText = telemetry.flood_water_level_cm + " cm";
+
+                document.getElementById('eq-progress').style.width = Math.min((telemetry.earthquake_vibration * 40), 100) + "%";
+                document.getElementById('fire-progress').style.width = Math.min((telemetry.fire_smoke_level / 5), 100) + "%";
+                document.getElementById('flood-progress').style.width = Math.min(telemetry.flood_water_level_cm, 100) + "%";
+
+                let statusEQ = evaluateThreshold(telemetry.earthquake_vibration, 1.0, 1.7, "eq-card", "eq-progress", "eq-icon", "bi-activity", "bi-lightning-fill");
+                let statusFire = evaluateThreshold(telemetry.fire_smoke_level, 220, 275, "fire-card", "fire-progress", "fire-icon", "bi-fire", "bi-exclamation-triangle-fill");
+                let statusFlood = evaluateThreshold(telemetry.flood_water_level_cm, 40, 80, "flood-card", "flood-progress", "flood-icon", "bi-water", "bi-tsunami");
+
+                const stateBadge = document.getElementById('system-status');
+                if (statusEQ === "DANGER" || statusFire === "DANGER" || statusFlood === "DANGER") {
+                    stateBadge.className = "badge bg-danger fs-6 p-2 text-white"; stateBadge.innerText = "⚠️ SYSTEM CRITICAL ALERT";
+                    playWarningBeep();
+                    if (!smsSent) {
+                        let activeHazard = statusFlood === "DANGER" ? "Flood" : (statusFire === "DANGER" ? "Smoke/Fire" : "Earthquake");
+                        let activeVal = statusFlood === "DANGER" ? document.getElementById('flood-val').innerText : (statusFire === "DANGER" ? document.getElementById('fire-val').innerText : document.getElementById('eq-val').innerText);
+                        logSMSDispatch(activeHazard, activeVal); smsSent = true;
+                    }
+                } else if (statusEQ === "WARNING" || statusFire === "WARNING" || statusFlood === "WARNING") {
+                    stateBadge.className = "badge bg-warning text-dark fs-6 p-2"; stateBadge.innerText = "⚠️ Elevated Risks Detected"; smsSent = false;
+                } else {
+                    stateBadge.className = "badge bg-light text-success fs-6 p-2"; stateBadge.innerText = "● System Operational"; smsSent = false;
+                }
+
+                if (telemetryChart.data.labels.length > 10) {
+                    telemetryChart.data.labels.shift(); telemetryChart.data.datasets[0].data.shift();
+                    telemetryChart.data.datasets[1].data.shift(); telemetryChart.data.datasets[2].data.shift();
+                }
+                telemetryChart.data.labels.push(timeNow);
+                telemetryChart.data.datasets[0].data.push(telemetry.earthquake_vibration * 25); 
+                telemetryChart.data.datasets[1].data.push(telemetry.fire_smoke_level / 3.5);   
+                telemetryChart.data.datasets[2].data.push(telemetry.flood_water_level_cm);
+                telemetryChart.update('none');
+
+            } catch (err) { console.error("Data pipeline disconnected:", err); }
+        }
+
+        setInterval(updateTelemetryFeed, 1500);
+    </script>
+</body>
+</html>
