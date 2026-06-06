@@ -45,7 +45,7 @@ def admin_panel():
 # API endpoint checking user security privileges on login
 @app.route('/api/admin/login', methods=['POST'])
 def admin_login():
-    data = request.json
+    data = request.json or {}
     username = data.get("username", "").strip()
     password = data.get("password", "").strip()
     
@@ -54,6 +54,9 @@ def admin_login():
         session['username'] = username
         session['role'] = USERS_DB[username]["role"]
         session['name'] = USERS_DB[username]["name"]
+
+        session.permanent = True
+        
         return jsonify({"status": "success", "role": session['role']})
     
     return jsonify({"status": "error", "message": "Invalid Credentials"}), 401
